@@ -1,7 +1,18 @@
 'use strict';
 
 var express = require('express');
+
+var Jwt = require('../models/jwt')
+
 var router = express.Router();
+
+router.get('/gettoken', (req, res, next) => {
+  let token = jwt.sign({ username: 'satit' }, secretKey, {
+    expiresIn: "2 days"
+  });
+
+  res.send(token)
+})
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -21,21 +32,30 @@ router.get('/download', (req, res, next) => {
 })
 
 router.get('/products', (req, res, next) => {
-  let db = req.db;
-  let sql = `
-  select p.name, p.id, c.name as category_name from products as p
-  left join categories as c on c.id=p.category_id
-  where p.id=? and c.id=?
-  `;
 
-  db.raw(sql, [2, 1])
-    .then(rows => {
-      res.send({ ok: true, rows: rows[0] })
-    })
-    .catch(err => {
-      console.log(err)
-      res.send({ ok: false, msg: `[${err.code}] ${err.message}` })
+  let token = req.query.token;
+
+  Jwt.verify(token)
+    .then(() => {
+      let db = req.db;
+      let sql = `
+        select p.name, p.id, c.name as category_name from products as p
+        left join categories as c on c.id=p.category_id
+        where p.id=? and c.id=?
+        `;
+
+      db.raw(sql, [2, 1])
+        .then(rows => {
+          res.send({ ok: true, rows: rows[0] })
+        })
+        .catch(err => {
+          console.log(err)
+          res.send({ ok: false, msg: `[${err.code}] ${err.message}` })
+        });
+    }, err => {
+      res.send({ ok: false, msg: 'Invalid token' });
     });
+
 })
 
 // localhost:3000/products

@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 var crypto = require('crypto');
+var Jwt = require('../models/jwt')
 
 router.post('/', (req, res, next) => {
   let db = req.db;
@@ -15,7 +16,9 @@ router.post('/', (req, res, next) => {
     .then((rows) => {
       console.log(rows[0])
       if (rows[0].length) {
-        res.send({ ok: true, username: username, fullname: rows[0][0].fullname });
+        let params = { user_id: rows[0][0].id };
+        let token = Jwt.sign(params);
+        res.send({ ok: true, token: token });
       } else {
         res.send({ok: false, msg: 'ชื่อผู้ใช้งาน/รหัสผ่าน ไม่ถูกต้อง'})
       }
