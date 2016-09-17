@@ -41,10 +41,9 @@ router.get('/products', (req, res, next) => {
       let sql = `
         select p.name, p.id, c.name as category_name from products as p
         left join categories as c on c.id=p.category_id
-        where p.id=? and c.id=?
         `;
 
-      db.raw(sql, [2, 1])
+      db.raw(sql, [])
         .then(rows => {
           res.send({ ok: true, rows: rows[0] })
         })

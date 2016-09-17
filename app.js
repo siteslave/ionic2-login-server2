@@ -12,6 +12,7 @@ var cors = require('cors');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var login = require('./routes/login');
+var api = require('./routes/api');
 
 var app = express();
 
@@ -32,11 +33,11 @@ app.use(cors());
 let db = require('knex')({
   client: 'mysql',
   connection: {
-    host: 'localhost',
+    host: '61.19.124.163',
     port: 3306,
-    database: 'carts',
-    user: 'root',
-    password: '043789124',
+    database: 'dhf',
+    user: 'ionic',
+    password: 'wvFvob8',
     insecureAuth: true
   }
 })
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 
 app.use('/', routes);
 app.use('/login', login);
+app.use('/api', api);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
