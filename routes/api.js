@@ -49,4 +49,29 @@ router.post('/search', function(req, res, next) {
 
 });
 
+router.post('/date-filter', function(req, res, next) {
+  let db = req.db;
+  let token = req.body.token;
+  let dateServ = req.body.dateServ;
+
+  jwt.verify(token)
+    .then((decoded) => {
+      let sql = `SELECT HOSPCODE, PID, NAME, LNAME 
+        FROM tmp_dengue
+        WHERE DATE_SERV=?
+        LIMIT 10`;
+      db.raw(sql, [dateServ])
+        .then(rows => {
+          res.send({ ok: true, rows: rows[0] });
+        })
+        .catch(err => {
+          res.send({ ok: false, msg: err.message })
+        });
+    }, err => {
+      console.log(err);
+      res.send({ok: false, msg: 'Invalid token!'})
+    });
+
+});
+
 module.exports = router;
