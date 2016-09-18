@@ -2,6 +2,27 @@ var express = require('express');
 var router = express.Router();
 var jwt = require('../models/jwt')
 
+router.get('/map', function(req, res, next) {
+  let db = req.db;
+  let token = req.query.token;
+
+  jwt.verify(token)
+    .then((decoded) => {
+        let sql = `SELECT LATITUDE, LONGITUDE tmp_dengue LIMIT 10`;
+        db.raw(sql, [])
+          .then(rows => {
+            res.send({ ok: true, rows: rows[0] });
+          })
+          .catch(err => {
+            res.send({ ok: false, msg: err.message })
+          });
+    }, err => {
+      console.log(err);
+      res.send({ok: false, msg: 'Invalid token!'})
+    });
+
+});
+
 router.get('/list', function(req, res, next) {
   let db = req.db;
   let token = req.query.token;
@@ -118,6 +139,34 @@ router.post('/emr-detail', function(req, res, next) {
       limit 1
         `;
       db.raw(sql, [hpid, dateServ])
+        .then(rows => {
+          res.send({ ok: true, rows: rows[0] });
+        })
+        .catch(err => {
+          res.send({ ok: false, msg: err.message })
+        });
+    }, err => {
+      console.log(err);
+      res.send({ok: false, msg: 'Invalid token!'})
+    });
+
+});
+
+router.post('/top-icd', function(req, res, next) {
+  let db = req.db;
+  let token = req.body.token;
+
+  jwt.verify(token)
+    .then((decoded) => {
+      let sql = `
+      select d.DIAGCODE as diagcode, c.diagtname, count(distinct d.HOSPCODE, d.PID) as total
+      from tmp_dengue as d
+      left join cicd10tm as c on c.diagcode=d.DIAGCODE
+      group by d.DIAGCODE
+      order by total desc
+      limit 10
+        `;
+      db.raw(sql, [])
         .then(rows => {
           res.send({ ok: true, rows: rows[0] });
         })
