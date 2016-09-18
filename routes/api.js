@@ -180,4 +180,33 @@ router.post('/top-icd', function(req, res, next) {
 
 });
 
+router.post('/top-hospital', function(req, res, next) {
+  let db = req.db;
+  let token = req.body.token;
+
+  jwt.verify(token)
+    .then((decoded) => {
+      let sql = `
+        select h.hosname, count(distinct d.HOSPCODE, d.PID) as total
+        from tmp_dengue as d
+        left join chospital as h on h.hoscode=d.HOSPCODE
+        group by d.HOSPCODE
+        order by total desc
+
+        limit 10
+        `;
+      db.raw(sql, [])
+        .then(rows => {
+          res.send({ ok: true, rows: rows[0] });
+        })
+        .catch(err => {
+          res.send({ ok: false, msg: err.message })
+        });
+    }, err => {
+      console.log(err);
+      res.send({ok: false, msg: 'Invalid token!'})
+    });
+
+});
+
 module.exports = router;
