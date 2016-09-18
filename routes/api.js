@@ -1,6 +1,60 @@
 var express = require('express');
 var router = express.Router();
 var jwt = require('../models/jwt')
+var gcm = require('node-gcm')
+
+router.get('/users-list', (req, res, next) => {
+  let db = req.db;
+  let sql = `SELECT username FROM users`;
+
+  db.raw(sql, [])
+    .then(rows => {
+      res.send({ ok: true, rows: rows[0] })
+    })
+    .catch(err => {
+      res.send({ ok: false, msg: err })
+    });
+})
+
+router.post('/send-notify', (req, res, next) => {
+  let db = req.db;
+  let token = req.body.token;
+  let username = req.body.username;
+
+  let sql = `SELECT token FROM users WHERE username=?`;
+  db.raw(sql, [username])
+    .then(rows => {
+      
+      var message = new gcm.Message();
+
+      message.addData('title', 'ทดสอบ')
+      message.addData('message', 'สวัสดี')
+      message.addData('content-available', true)
+
+      let allTokens = [];
+      rows[0].forEach(v => {
+        if (v.token) allTokens.push(v.token);
+      })
+
+      console.log(allTokens)
+      
+      var tokens = allTokens
+
+      var sender = new gcm.Sender('AIzaSyD6UdWkXR-VbYs0UU8uY6R8NzLszAqddd4')
+
+      sender.send(message, { registrationTokens: tokens }, (err, response) => {
+        console.log(response)
+        if (err) res.send({ok: false, msg: err})
+        else res.send({ok: true})
+      });
+        
+    })
+    .catch(err => {
+      res.send({ ok: false })
+    });
+
+
+})
 
 router.post('/register-device', (req, res, next) => {
   let deviceToken = req.body.deviceToken;
@@ -8,7 +62,7 @@ router.post('/register-device', (req, res, next) => {
   let token = req.body.token;
 
   let db = req.db;
-  
+
   console.log(req.body);
   
     jwt.verify(token)
