@@ -2,6 +2,32 @@ var express = require('express');
 var router = express.Router();
 var jwt = require('../models/jwt')
 
+router.post('/register-device', (req, res, next) => {
+  let deviceToken = req.body.deviceToken;
+  let username = req.body.username;
+  let token = req.body.token;
+
+  let db = req.db;
+  
+  console.log(req.body);
+  
+    jwt.verify(token)
+    .then((decoded) => {
+        let sql = `UPDATE users SET token=? WHERE username=?`;
+        db.raw(sql, [deviceToken, username])
+          .then(() => {
+            res.send({ ok: true });
+          })
+          .catch(err => {
+            res.send({ ok: false, msg: err.message })
+          });
+    }, err => {
+      console.log(err);
+      res.send({ok: false, msg: 'Invalid token!'})
+    });
+
+})
+
 router.get('/map', function(req, res, next) {
   let db = req.db;
   let token = req.query.token;
